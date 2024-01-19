@@ -4,9 +4,9 @@ import dlib
 from utils import extract_index
 
 
-def init():
+def initialize():
     # Create a video capture object, in this case we are reading the video from a file
-    vid_capture = cv2.VideoCapture("roy_original.mov")
+    vid_capture = cv2.VideoCapture("roy.mov")
 
     if not vid_capture.isOpened():
         print("Error opening the video file")
@@ -24,7 +24,8 @@ def init():
 
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-    original_set = []
+    orientation_token_set = []
+    indices_triangles_set = []
 
     while vid_capture.isOpened():
         ret, img = vid_capture.read()
@@ -73,7 +74,9 @@ def init():
 
                     if index_point1 is not None and index_point2 is not None and index_point3 is not None:
                         indices_triangles.append((index_point1, index_point2, index_point3, point1, point2, point3))
-                original_set.append([orientation_token, indices_triangles])
+
+                orientation_token_set.append(orientation_token)
+                indices_triangles_set.append(indices_triangles)
                 cv2.putText(img, "recorded", (100, 100), 1, 3, (0, 0, 0))
                 break
             cv2.imshow('Frame', img)
@@ -85,4 +88,6 @@ def init():
     # Release the video capture object
     vid_capture.release()
     cv2.destroyAllWindows()
-    return original_set
+    print(orientation_token_set)
+    print(indices_triangles_set)
+    return orientation_token_set, indices_triangles_set
