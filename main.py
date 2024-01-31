@@ -1,16 +1,9 @@
-from init import initialize
 import cv2
 import numpy as np
 import dlib
-from utils import *
 from data import orientation_token_set, indices_triangles_set
-TARGET = "Untitled.mov"
-# TARGET = 0
 
-# orientation_token_set, indices_triangles_set = initialize()
-
-# Create a video capture object, in this case we are reading the video from a file
-vid_capture = cv2.VideoCapture(TARGET)
+vid_capture = cv2.VideoCapture(0)
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
@@ -28,13 +21,10 @@ else:
     frame_count = vid_capture.get(7)
     print('Frame count : ', frame_count)
 
-print("2")
-
 while vid_capture.isOpened():
     ret, img = vid_capture.read()
     if ret:
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        final = np.zeros_like(img)
         img_faces = detector(img_gray)
         if len(img_faces) > 0:
             print("face detected")
@@ -45,18 +35,31 @@ while vid_capture.isOpened():
                     x = landmarks.part(n).x
                     y = landmarks.part(n).y
                     img_landmarks_points.append((x, y))
-                print("3")
 
                 points = np.array(img_landmarks_points, np.int32)
                 # orientation token
                 token = np.concatenate([points[:, 0] - points[30, 0], points[:, 1] - points[30, 1]])
                 token = (token - np.average(token)) / np.std(token)
 
+                print("nose tip = {}".format(token[30]))
+                print("left eye = {}".format(token[38] - token[40]))
+                print("right eye = {}".format(token[44] - token[46]))
+                print("left sun = {}".format(token[0]))
+                print("right sun = {}".format(token[16]))
+                print("chin center = {}".format(token[8]))
+                print("mouth = {}".format(token[62] - token[66]))
+
+                cv2.putText(img, "nose tip = {}".format(token[30]), (100, 100), 2, 3, (255, 255, 0), 3)
+                cv2.putText(img, "left eye = {}".format(token[38] - token[40]), (100, 200), 2, 3, (255, 255, 0), 3)
+                cv2.putText(img, "right eye = {}".format(token[44] - token[46]), (100, 300), 2, 3, (255, 255, 0), 3)
+                cv2.putText(img, "left sun = {}".format(token[0]), (100, 400), 2, 3, (255, 255, 0), 3)
+                cv2.putText(img, "right sun = {}".format(token[16]), (100, 500), 2, 3, (255, 255, 0), 3)
+                cv2.putText(img, "chin center = {}".format(token[8]), (100, 600), 2, 3, (255, 255, 0), 3)
+                cv2.putText(img, "mouth = {}".format(token[62] - token[66]), (100, 700), 2, 3, (255, 255, 0), 3)
+
                 # compare with init tokens, find the most similar one
-                print("4")
                 dist = np.array([np.linalg.norm(token - target) for target in orientation_token_set], np.float32)
                 target_set = indices_triangles_set[dist.argmin()]
-                print("5")
                 x0 = 300
                 y0 = -500
                 for t_set in target_set:
@@ -66,7 +69,6 @@ while vid_capture.isOpened():
                     cv2.circle(img, (x1 + x0, y1 + y0), 5, (255, 0, 0), -1)
                     cv2.circle(img, (x2 + x0, y2 + y0), 5, (255, 0, 0), -1)
                     cv2.circle(img, (x3 + x0, y3 + y0), 5, (255, 0, 0), -1)
-                print("6")
 
                 # # convex hull
                 # target_points = np.array(img_landmarks_points, np.int32)
